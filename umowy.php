@@ -667,6 +667,28 @@ class umowy_zakup_warchlakow extends RBO_Recordset {
 }
 
 
+class umowy_comments extends RBO_Recordset {
+
+    function table_name() { // - choose a name for the table that will be stored in EPESI database
+
+        return 'umowy_comments';
+
+    }
+    function fields() { // - here you choose the fields to add to the record browser
+
+        $umowa = new RBO_Field_Integer(_M("id_umowy"));
+        $umowa->set_required()->set_visible();
+
+        $comment = new RBO_Field_LongText(_M("comment"));
+        $comment->set_visible();
+
+        return array($umowa,$comment); // - remember to return all defined fields
+
+
+    }
+
+}
+
 
 class umowy_extend extends RBO_Recordset {
 

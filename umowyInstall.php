@@ -13,7 +13,7 @@ class umowyInstall extends ModuleInstall {
         Base_ThemeCommon::install_default_theme($this->get_type());
 
         Utils_CommonDataCommon::new_array("Umowy/status",
-            array(0 => 'Odrzucony' , 1 => 'Zatwierdzony', 2 => 'Otwarty' , 3=> 'Czeka na akceptacje'));
+            array(0 => 'Odrzucony' , 1 => 'Zatwierdzony', 2 => 'Otwarty' , 3=> 'Czeka na akceptacje', 4=> "Ponownie otwarty"));
 
         $types = array(
             "nowa_formula" => "Nowa Formuła",
@@ -51,6 +51,7 @@ class umowyInstall extends ModuleInstall {
         $table = new umowy_umowy();
         $table->install();
         $table->add_default_access();
+
        /* $table =  new umowy_nowa_formula();
         $table->install();
         $table->add_default_access();
@@ -93,6 +94,9 @@ class umowyInstall extends ModuleInstall {
        $table = new umowy_extend();
        $table->install();
        $table->add_default_access();
+       $table = new umowy_comments();
+       $table->install();
+       $table->add_default_access();
 
         $ret = true;
         return $ret; // Return false on success and false on failure
@@ -102,6 +106,8 @@ class umowyInstall extends ModuleInstall {
         // Here you can place uninstallation process for the module
 
         $table = new umowy_umowy();
+        $table->uninstall();
+        $table = new umowy_comments();
         $table->uninstall();
         /*$table = new umowy_nowa_formula();
         $table->uninstall();

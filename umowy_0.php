@@ -38,13 +38,6 @@ class umowy extends Module {
         Base_ThemeCommon::install_default_theme($this->get_type());
         Base_ThemeCommon::load_css('umowy','default');
         Base_LangCommon::install_translations('umowy');
-        Base_ActionBarCommon::add(
-            'add',
-            'Dodaj nową umowe',
-            $this->create_callback_href(array($this,'addNew')),
-            null,
-            5
-        );
         if($_REQUEST['action'] == 'sortBy'){
             $crits = $this->get_module_variable("sortCrits");
             $crits[$_REQUEST['field']] = $_REQUEST['type'];
@@ -54,8 +47,42 @@ class umowy extends Module {
         }
 
         //main view
+        if($this->get_module_variable('view') == "reply"){
+            $umowa = $rboUmowy->get_record($this->get_module_variable('forRecord'));
+            $form = & $this->init_module('Libs/QuickForm');
+                        
+            
+            $form->addElement("textarea",'comment','Uwagi', array("cols" => "180", "rows" => "20"));
+            Base_ActionBarCommon::add(
+                'back',
+                'Wtecz',
+                $this->create_callback_href(array($this,'back'),array("details")),
+                null,
+                1
+            );
+            if ($form->validate()) {
+                $array_fields = $form->exportValues();
+                $rboRecord = new RBO_RecordsetAccessor("umowy_comments");
+                $record = $rboRecord->new_record();
+                $record['id_umowy'] = $this->get_module_variable('forRecord');
+                $record['comment'] = $array_fields['comment'];
+                $record->save();
+                $this->back("details");
+            }else{
+                Base_ActionBarCommon::add('send', __('Send'), $form->get_submit_form_href(),null,2);
+                $form->display();
+            }
+        }
+
         if($this->get_module_variable('view') == "all") {
 
+            Base_ActionBarCommon::add(
+                'add',
+                'Dodaj nową umowe',
+                $this->create_callback_href(array($this,'addNew')),
+                null,
+                2
+            );
             if($_REQUEST['action'] == "clearBrowser"){
                 $this->set_module_variable("searchMain",null);
                 $this->set_module_variable("searchMini",null);
@@ -135,7 +162,7 @@ class umowy extends Module {
                 }
                 $edit = "";
                 $del = "";
-                if($umowa->status == 2) {
+                if($umowa->status == 2 || $umowa->status == 4) {
                     $edit = $umowa->record_link($edit_btn,false,"edit");
                     $del = "<a " . $this->create_confirm_callback_href("Na pewno usunąć tą umowę i wszystkie należące pod nią?",
                             array($this, "recordDelete"), array($umowa->id, "umowy")) . ">" . $del_btn . "</a>";
@@ -153,16 +180,74 @@ class umowy extends Module {
             $gb->get_limit(count($umowy));
             $gb->automatic_display($paging=true);
         }
+        // <---------------- szczegolowy ---------------- >
         if($this->get_module_variable('view') == "details"){
+            $umowa = $rboUmowy->get_record($this->get_module_variable('forRecord'));
             Base_ActionBarCommon::add(
                 'back',
                 'Wtecz',
                 $this->create_callback_href(array($this,'back'),array("all")),
                 null,
-                5
+                1
             );
+            if($umowa->status == "2" || $umowa->status == "4"){
+                Base_ActionBarCommon::add(
+                    'add',
+                    'Dodaj nową umowe',
+                    $this->create_callback_href(array($this,'addNew')),
+                    null,
+                    2
+                );
+                Base_ActionBarCommon::add(
+                    'send',
+                    'Wyślij do akceptacji',
+                    $this->create_callback_href(array($this,'manageRecord'), array("send",$umowa->id)),
+                    null,
+                    2
+                );
+            }
+
+            if((Base_AclCommon::i_am_sa() == "1" || Base_AclCommon::i_am_admin() == "1") && $umowa->status == "3" ){
+                Base_ActionBarCommon::add(
+                    'send',
+                    'Zaakceptuj',
+                    $this->create_callback_href(array($this,'manageRecord'),array("accept",$umowa->id)),
+                    null,
+                    3
+                );
+                Base_ActionBarCommon::add(
+                    'reply',
+                    'Zwróć',
+                    $this->create_callback_href(array($this,'manageRecord'),array("reply",$umowa->id)),
+                    null,
+                    4
+                );
+                Base_ActionBarCommon::add(
+                    'delete',
+                    'Odrzuć',
+                    $this->create_callback_href(array($this,'manageRecord'),array("delete",$umowa->id)),
+                    null,
+                    5
+                );
+            }
+
+            if($umowa->status == 4){
+                $rboComment = new RBO_RecordsetAccessor("umowy_comments");
+                $comments = $rboComment->get_records(array("_active" => 1 , "id_umowy" => $umowa->id),array(), array());
+                foreach($comments as $comment){
+
+
+
+                    print("<div position:fixed;z-index:9999;width:100%;height:100%;display:block; background-color: rgba(0,0,0,0.4);left:0;top:0;'>");
+                        print("<div style='background-color: #fefefe;width: 40%;position: relative;border-radius:12px 12px;padding:10px;'>");
+                            print("<h1 style='color:red;'> UWAGI </h1>");
+                            print("<p style='font-size:18px;'>".nl2br($comment->comment)."</p>");
+                        print("</div>");
+                    print("</div>");
+                }
+            }
+
             $rboExpand = new RBO_RecordsetAccessor("umowy_extend");
-            $umowa = $rboUmowy->get_record($this->get_module_variable('forRecord'));
             $subUmowy = $rboExpand->get_records(array('id_umowy'=>$umowa->id),array("!id"),array('childType' => "ASC"));
             $this->set_module_variable("parentType", $umowa['type']);
             print("<div style='text-align: left;padding-left:15%;' ><h2>
@@ -178,10 +263,10 @@ class umowy extends Module {
                         $tr1 .= "<tr style='display:none;' class='selected_tr'>";
                         if(preg_match("/date+[a-zA-Z]+/",$key)){
                            $time =  Base_RegionalSettingsCommon::time2reg($value,false,true,true,true);
-                           $tr1 .= "<td style='padding-left:30px;'>".__($key)."</td><td style='text-align:left;padding-left:30px;border-left:1px solid black;'>".$time."</td>";
+                           $tr1 .= "<td style='padding-left:30px;background-color:#80d9f7;border-bottom:1px solid #4db3d6;'>".__($key)."</td><td style='text-align:left;padding-left:30px;border-left:1px solid #2a7189;'>".$time."</td>";
                         }
                         else{
-                            $tr1 .= "<td style='padding-left:30px;'>".__($key)."</td><td style='text-align:left;padding-left:30px;border-left:1px solid black;'>".$value."</td>";
+                            $tr1 .= "<td style='padding-left:30px;background-color:#80d9f7;border-bottom:1px solid #4db3d6;'>".__($key)."</td><td style='text-align:left;padding-left:30px;border-left:1px solid #2a7189;'>".$value."</td>";
                         }
                         $tr1 .= "</tr>";
                     }
@@ -190,7 +275,7 @@ class umowy extends Module {
                 if(!strlen($tableName)) $tableName = $this->getTableDisplayName($umowa->type);
                 $del = "";
                 $edit = "";
-                if($umowa->status == 2) {
+                if($umowa->status == 2 || $umowa->status == 4) {
                     $del = "<a " . $this->create_confirm_callback_href("Na pewno usunąć tą umowę?", array($this, "recordDelete"), array($subUmowa['id'], "umowy_extend")) . ">" . $del_btn . "</a>";
                     $edit = $this->createLink($edit_btn, $this->create_callback_href(array($this, "recordEdit"), array($subUmowa->id)));
                 }
@@ -205,6 +290,7 @@ class umowy extends Module {
                 print($tr1);
                 print("</table><br>");
                 load_js($this->get_module_dir().'js/view.js');
+                // <---------------- end szczegolowy ---------------- >
             }
         }
         return true;
@@ -212,6 +298,39 @@ class umowy extends Module {
 
     public function back($view){
         $this->set_module_variable("view",$view);
+    }
+    public function manageRecord($action,$id){
+        $rboUmowy = new RBO_RecordsetAccessor("umowy");
+        switch($action){
+            case "send":
+                $umowa = $rboUmowy->get_record($id);
+                if($umowa->status == "4"){
+                    $commentsRBO = new RBO_RecordsetAccessor("umowy_comments");
+                    $comments = $commentsRBO->get_records(array("_active" => 1 , 'id_umowy' => $id), array(), array());
+                    foreach($comments as $comment){
+                        $comment->delete();
+                    }
+                }
+                $umowa->status = '3';
+                $umowa->save();
+                break;
+            case "accept":
+                $umowa = $rboUmowy->get_record($id);
+                $umowa->status = '1';
+                $umowa->save();
+                break;
+            case "reply":
+                $umowa = $rboUmowy->get_record($id);
+                $umowa->status = '4';
+                $umowa->save();
+                $this->set_module_variable("view","reply");
+                break;
+            case "delete":
+                $umowa = $rboUmowy->get_record($id);
+                $umowa->status = '0';
+                $umowa->save();
+                break;
+        }
     }
 
     public function addNew(){
@@ -275,7 +394,7 @@ class umowy extends Module {
                            $type = "text";
                        }
                         $form->addElement($type, $name, __($name), array('id' => $name));
-                
+                       // $f->addElement('automulti','farmer','Automulti test', array($this->get_type().'Common', 'automulti_search'), array('ble'), array($this->get_type().'Common', 'automulti_format'));
                    }
                }
                else{
