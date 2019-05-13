@@ -15,39 +15,33 @@ class umowyInstall extends ModuleInstall {
         Utils_CommonDataCommon::new_array("Umowy/status",
             array(0 => 'Odrzucony' , 1 => 'Zatwierdzony', 2 => 'Otwarty' , 3=> 'Czeka na akceptacje', 4=> "Ponownie otwarty"));
 
-        $types = array(
-            "nowa_formula" => "Nowa Formuła",
-            "doradztwo_hodowlano_zywieniowe" => "Doradztwo hodowlano żywieniowe",
-            "umowa_warchlak_gruzja" => "Umowa Gruzja",
-            "kupno_sprzedaz_trzoda" => "Kupno / Sprzedaż trzoda",
-            "zakup_warchlakow" => "Umowa zakupu warchlaków");
+            $types = array(
+                "UMOWA_doradztwo_hodowlano_zywieniowe_LEKARZ_ATH" => "UMOWA doradztwo hodowlano żywieniowe LEKARZ ATH",
+                "UMOWA_doradztwo_hodowlano_zywieniowe_LEKARZ_ROLNIK" => "UMOWA doradztwo hodowlano żywieniowe LEKARZ ROLNIK",
+                "Umowa_GRUZJA" => "Umowa GRUZJA",
+                "Umowa_KREDYTOWA_BEZTERMINOWA" => "Umowa KREDYTOWA BEZTERMINOWA",
+                "Umowa_NOWA_FORMULA_LEKARZ_ATH" => "Umowa NOWA FORMUŁA LEKARZ ATH",
+                "Umowa_NOWA_FORMULA_LEKARZ_ROLNIK" => "Umowa NOWA FORMUŁA LEKARZ ROLNIK",
+            );
 
         Utils_CommonDataCommon::new_array("Umowy/typyUmow", $types);
 
         $childs = array(
             "" => "---",
-            "nowa_formula_zalacznik" => "Załącznik do nowej formuły" ,
-            "nowa_formula_poreczenie" => "Poręczenie do nowej formuły",
+            "Umowa_PORECZENIA_dla_nowa_formula" => "Umowa PORĘCZENIA dla nowa formuła" ,
+            "ZALACZNIK_dla_nowa_formula" => "ZAŁĄCZNIK dla nowa formuła",
         );
-        Utils_CommonDataCommon::new_array("Umowy/typyUmow/nowa_formula", $childs);
+        Utils_CommonDataCommon::new_array("Umowy/typyUmow/Umowa_NOWA_FORMULA_LEKARZ_ATH", $childs);
+        Utils_CommonDataCommon::new_array("Umowy/typyUmow/Umowa_NOWA_FORMULA_LEKARZ_ROLNIK", $childs);
 
         $childs = array(
             "" => "---",
-            "poreczenie_doradztwo" => "Poręczenie o doradztwo hodowlano żywieniowe",
-            "zalacznik_do_przewlaszczenia" => "Załącznik do przewłaszczenia",
-            "poreczenie_doradztwo" => "Poręczenie o doradztwo hodowlano żywieniowe",
-            "doradztwo_przewlaszczenie" => "Doradztwo o przewłaszczenie",
+            "Umowa_PORECZENIA_dla_umowy_o_doradztwo" => "Umowa PORĘCZENIA dla umowy o doradztwo",
+            "Umowa_PRZEWLASZCZENIA_dla_umowy_o_doradztwo" => "Umowa PRZEWŁASZCZENIA dla umowy o doradztwo",
+            "ZALACZNIK_dla_umowy_o_doradztwo" => "ZAŁĄCZNIK dla umowy o doradztwo"
         );
-        Utils_CommonDataCommon::new_array("Umowy/typyUmow/doradztwo_hodowlano_zywieniowe", $childs);
-
-        $childs = array(
-            "" => "---",
-            "zalacznik_3_do_umowy_ramowej" => "Załącznik 3 do umowy ramowej",
-            "zalacznik_do_kupno_sprzedaz_trzoda" => "Załącznik kupna sprzedaży trzody",
-            "zalacznik2_wbc" => "Załącznik do umowy ramowej WBC"
-        );
-        Utils_CommonDataCommon::new_array("Umowy/typyUmow/kupno_sprzedaz_trzoda", $childs);
-
+        Utils_CommonDataCommon::new_array("Umowy/typyUmow/UMOWA_doradztwo_hodowlano_zywieniowe_LEKARZ_ATH", $childs);
+        Utils_CommonDataCommon::new_array("Umowy/typyUmow/UMOWA_doradztwo_hodowlano_zywieniowe_LEKARZ_ROLNIK", $childs);
         $table = new umowy_umowy();
         $table->install();
         $table->add_default_access();

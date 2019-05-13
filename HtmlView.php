@@ -81,7 +81,8 @@ class HtmlView
         foreach($fields as $field){
             if($field[0] == "select") {
                 $this->form->addElement($field[0], $field[1], __($field[2]), $field[3]);
-            }else{
+            }
+            else{
                 $this->form->addElement($field[0], $field[1], __($field[2]) , array('value'=> $field[3]));
             }
         }

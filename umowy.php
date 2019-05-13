@@ -727,7 +727,7 @@ class umowy_extend extends RBO_Recordset {
         $farmerNip->set_visible()->set_length(30);
 
         $farmerAddress = new RBO_Field_Text(_M("farmerAddress"));
-        $farmerAddress->set_visible()->set_length(30);
+        $farmerAddress->set_visible()->set_length(80);
 
         $farmerPostalCode = new RBO_Field_Text(_M("farmerPostalCode"));
         $farmerPostalCode->set_visible()->set_length(10);
@@ -735,8 +735,8 @@ class umowy_extend extends RBO_Recordset {
         $farmerEmail = new RBO_Field_Text(_M("farmerEmail"));
         $farmerEmail->set_visible()->set_length(40);
 
-        $farmerBankNumber = new RBO_Field_Integer(_M("farmerBankNumber"));
-        $farmerBankNumber->set_visible();
+        $farmerBankNumber = new RBO_Field_Text(_M("farmerBankNumber"));
+        $farmerBankNumber->set_visible()->set_length(26);
 
         $farmerNrGosp = new RBO_Field_Text(_M("farmerNrGosp"));
         $farmerNrGosp->set_visible()->set_length(40);
@@ -754,7 +754,7 @@ class umowy_extend extends RBO_Recordset {
         $farmerCityWork->set_visible()->set_length(30);
 
         $farmerAddressWork = new RBO_Field_Text(_M("farmerAddressWork"));
-        $farmerAddressWork->set_visible()->set_length(30);
+        $farmerAddressWork->set_visible()->set_length(80);
 
         $pigAmount = new RBO_Field_Integer(_M("pigAmount"));
         $pigAmount->set_visible();
