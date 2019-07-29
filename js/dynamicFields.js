@@ -25,9 +25,9 @@
                     if(returned.farmerDetails.agreementadress){
                         adresswork = returned.farmerDetails.agreementadress;
                     }else{
-                        adresswork = returned.farmerDetails.address_1 + ", " + returned.farmerDetails.city + " " + returned.farmerDetails.postal_code;
+                        adresswork = returned.farmerDetails.address_1 + ", " + returned.farmerDetails.postal_code + " " + returned.farmerDetails.city;
                     }
-                    adress = returned.farmerDetails.address_1 + ", " + returned.farmerDetails.city + " " + returned.farmerDetails.postal_code;
+                    adress = returned.farmerDetails.address_1 + ", " + returned.farmerDetails.postal_code + " " + returned.farmerDetails.city;
                     $("#farmercity").val(returned.farmerDetails.city);
                     $("#farmeremail").val(returned.farmerDetails.email);
                     $("#farmerpesel").val(returned.farmerDetails.pesel);
