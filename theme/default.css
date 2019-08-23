@@ -258,3 +258,25 @@
 .ttable-dark.ttable-hover tbody tr:hover {
     background-color: rgba(255, 255, 255, 0.075);
 }
+
+#downloadBox{
+    text-align:left;
+    margin-bottom:10px;
+}
+
+.cardDownloadsBox{
+    padding:5px;
+    width:350px;
+    border-radius:0 25px 25px 0;
+    background-color:#dbdbdb;
+    margin-top:3px;
+    margin-bottom:3px;
+}
+
+#downloadBox  div{
+    display: none;
+}
+#downloadBox:hover  div{
+    display: block;
+}
+

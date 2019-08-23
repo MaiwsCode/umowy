@@ -24,8 +24,8 @@ class umowy extends Module {
 
         if(isset($_REQUEST['__jump_to_RB_table'])){
             $rs = new RBO_RecordsetAccessor($_REQUEST['__jump_to_RB_table']);
-            $rb = $rs->create_rb_module ( $this );
-            $this->display_module ( $rb);
+            $rb = $rs->create_rb_module($this);
+            $this->display_module($rb);
         }
 
         $rboUmowy = new RBO_RecordsetAccessor("umowy");
@@ -152,6 +152,28 @@ class umowy extends Module {
                 if ($item1['created_on'] == $item2['created_on']) return 0;
                 return $item1['created_on'] > $item2['created_on'] ? -1 : 1;
             });
+            load_css($this->get_module_dir().'theme/default.css');
+            $tables = $this->getTables();
+            $lis = "";
+            Base_ThemeCommon::install_default_theme($this->get_type());
+            foreach($tables as $key => $value){ 
+                $href = $this->downloadBlankWord(0, $key);
+                $childTables = $this->getChildTable($key);
+                $childs = "";
+                foreach($childTables as $childTableKey => $childTableValue){
+                    if($childTableValue != "---"){
+                        $href2 = $this->downloadBlankWord(0, $childTableKey);
+                        $childs .= "<div style='margin-left:10px;padding-top:3px;padding-bottom:2px;'><a $href2> $childTableValue </a> </div>";
+                    }
+                }
+                $lis .= "<div class='cardDownloadsBox'><a $href> $value </a>
+                            <div style='margin-top:5px;'> $childs </div>
+                </div>";
+            }
+            print("<div id='downloadBox'  > 
+                        <span style='margin-left:10px;'> POBIERZ SZABLON </span>
+                            $lis
+                    </div>");
             $gb = &$this->init_module('Utils/GenericBrowser', null, '');
             $gb->set_table_columns(
                 array(
@@ -868,6 +890,10 @@ class umowy extends Module {
        $href = 'href="modules/umowy/word.php?'.http_build_query(array('umowaID'=> $id , 'cid'=>CID)).'"';
        return $href;
     }
+    public function downloadBlankWord($id,$document){
+        $href = 'href="modules/umowy/word.php?'.http_build_query(array('umowaID'=> $id , 'cid'=>CID,'document' => $document)).'"';
+        return $href;
+     }
 
     public function getFarmerName($id){
         $farmer = Utils_RecordBrowserCommon::get_record("company",$id);
