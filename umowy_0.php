@@ -235,27 +235,10 @@ class umowy extends Module {
                 );
                 Base_ActionBarCommon::add(
                     'send',
-                    'Wyślij do akceptacji',
-                    $this->create_callback_href(array($this,'manageRecord'), array("send",$umowa->id)),
-                    null,
-                    2
-                );
-            }
-
-            if((Base_AclCommon::i_am_sa() == "1" || Base_AclCommon::i_am_admin() == "1") && $umowa->status == "3" ){
-                Base_ActionBarCommon::add(
-                    'send',
-                    'Zaakceptuj',
+                    'Podpisana',
                     $this->create_callback_href(array($this,'manageRecord'),array("accept",$umowa->id)),
                     null,
                     3
-                );
-                Base_ActionBarCommon::add(
-                    'reply',
-                    'Zwróć',
-                    $this->create_callback_href(array($this,'manageRecord'),array("reply",$umowa->id)),
-                    null,
-                    4
                 );
                 Base_ActionBarCommon::add(
                     'delete',
@@ -265,6 +248,7 @@ class umowy extends Module {
                     5
                 );
             }
+
             if($umowa->status == 4){
                 $rboComment = new RBO_RecordsetAccessor("umowy_comments");
                 $comments = $rboComment->get_records(array("_active" => 1 , "id_umowy" => $umowa->id),array(), array());
@@ -367,12 +351,27 @@ class umowy extends Module {
                 $umowa = $rboUmowy->get_record($id);
                 $umowa->status = '1';
                 $umowa->save();
-                break;
-            case "reply":
-                $umowa = $rboUmowy->get_record($id);
-                $umowa->status = '4';
-                $umowa->save();
-                $this->set_module_variable("view","reply");
+                $rboTucze = new RBO_RecordsetAccessor("kontrakty");
+                $companyRbo = new RBO_RecordsetAccessor("company");
+                for($i =0;$i<$umowa['rzuty'];$i++){
+                    $sub = Utils_RecordBrowserCommon::get_records("umowy_extend", array("id_umowy" => $umowa->id, "childType" => $umowa->type),array(),array());
+                    $farmerName ="";
+                    $date = "";
+                    foreach($sub as $e){
+                        $farmerName = $e['farmer'];
+                        $date = $e['datestart'];
+                        break;
+                    }
+                    $rolnik = $companyRbo->get_record($farmerName);
+                    $d = 90 * $i;
+                    $date = date('Y-m-d', strtotime($date. " + $d days"));
+                    $name = $rolnik['company_name']." ".$date." (RZUT ".($i+1).")";
+                    $tucz = array("farmer" => $farmerName, "kolczyk" => "", 
+                                    "name_number" => $name, "status" => "Planned","data_start" => $date);
+                    $newTucz = $rboTucze->new_record($tucz);
+                    $newTucz->save();
+    
+                }
                 break;
             case "delete":
                 $umowa = $rboUmowy->get_record($id);
@@ -404,6 +403,7 @@ class umowy extends Module {
             $submitedValues = $form->getSubmitValues();
             $fieldsForNewUmowa = array();
             $fieldsForSubUmowa = array();
+            $fieldsForNewUmowa['rzuty'] = $submitedValues['rzuty'];
             foreach($submitedValues as $key => $item){
                 $key = strtolower($key);
                 if($key != "submited" || $key != "submit" || $key != "__action_module__"){
@@ -469,8 +469,6 @@ class umowy extends Module {
                 $newSubUmoaw = $rboSubItems->new_record($fieldsForSubUmowa);
                 $newSubUmoaw->save();
             }
-
-
         }
         if($status){
         $htmlElements = new HtmlView();
@@ -637,6 +635,7 @@ class umowy extends Module {
                     }
                 }
             }
+            $form->addElement("text","rzuty", "Ilość rzutów", array('value'=> '1'));
             $form->addElement("hidden","documentType",$documentName);
             $form->addElement("submit","submit","Dodaj");
             $form->toHtml();
@@ -654,10 +653,13 @@ class umowy extends Module {
         require_once 'Template.php';
         $status = true;
         $form = & $this->init_module('Libs/QuickForm');
+        $rboUmowy = new RBO_RecordsetAccessor("umowy");
         if($form->validate_with_message("Dodano","Coś poszło nie tak, sprawdź poprawność danych")) {
             $submitedValues = $form->getSubmitValues();
+            $main = $rboUmowy->get_record($id);
             $fieldsForNewUmowa = array();
             $fieldsForSubUmowa = array();
+            $fieldsForNewUmowa['rzuty'] = $main['rzuty'];
             foreach ($submitedValues as $key => $item) {
                 $key = strtolower($key);
                 if ($key != "submited" || $key != "submit" || $key != "__action_module__") {
@@ -677,7 +679,6 @@ class umowy extends Module {
                     }
                 }
             }
-            $rboUmowy = new RBO_RecordsetAccessor("umowy");
             $rboSubItems = new RBO_RecordsetAccessor("umowy_extend");
             $newUmowa = $rboUmowy->new_record($fieldsForNewUmowa);
             $newUmowa->save();

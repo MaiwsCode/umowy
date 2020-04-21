@@ -39,6 +39,8 @@ $translations['dateend'] = "Data zakończenia";
 $translations['farmeridcard'] = "Numer dowodu";
 $translations['potracenie'] = "Potrącenie";
 $translations['cenawbc'] = "Cena WBC";
+$translations['rzuty'] = "Ilość rzutów";
+
 
 
 

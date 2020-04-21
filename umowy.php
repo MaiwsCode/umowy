@@ -23,8 +23,10 @@ class umowy_umowy extends RBO_Recordset {
         $type->from('Umowy/typyUmow')->set_required();
         $number = new RBO_Field_Text(_M("number"));
         $number->set_visible()->set_required()->set_length(40);
+        $rzuty = new RBO_Field_Integer(_M("rzuty"));
+        $rzuty->set_visible();
 
-        return array($status,$type,$number); // - remember to return all defined fields
+        return array($status,$type,$number,$rzuty); // - remember to return all defined fields
 
 
     }
@@ -794,6 +796,7 @@ class umowy_extend extends RBO_Recordset {
 
         $cenaWBC = new RBO_Field_Text(_M("cenaWBC"));
         $cenaWBC->set_visible()->set_length(30);
+
 
 
         return array($umowa,$umowaChildType, $farmer,$dateStart,$dateSigning,$dateFrom,$farmerCity,$farmerNip,$farmerAddress,$farmerPostalCode,$farmerEmail,
