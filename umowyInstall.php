@@ -13,7 +13,7 @@ class umowyInstall extends ModuleInstall {
         Base_ThemeCommon::install_default_theme($this->get_type());
 
         Utils_CommonDataCommon::new_array("Umowy/status",
-            array(0 => 'Odrzucony' , 1 => 'Podpisana', 2 => 'Otwarty'));
+            array(0 => 'Odrzucony' , 1 => 'Zatwierdzony', 2 => 'Otwarty' , 3=> 'Czeka na akceptacje', 4=> "Ponownie otwarty"));
 
             $types = array(
                 "UMOWA_doradztwo_hodowlano_zywieniowe_LEKARZ_ATH" => "UMOWA doradztwo hodowlano żywieniowe LEKARZ ATH",

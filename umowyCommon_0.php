@@ -84,9 +84,6 @@ class umowyCommon extends ModuleCommon {
         return $trader['last_name']." ".$trader['first_name'];
     }
 
-
-
-
     public static function automulti_format($records){
 
         return $records;

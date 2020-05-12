@@ -47,7 +47,7 @@ class umowy extends Module {
             $crits[$_REQUEST['field']] = $_REQUEST['type'];
             $this->set_module_variable("sortCrits", $crits);
             $this->set_module_variable($_REQUEST['field']."Sort", $this->changeSort($_REQUEST['type']));
-            print("sort".$_REQUEST['field']);
+          //  print("sort".$_REQUEST['field']);
         }
 
         //main view
@@ -235,27 +235,41 @@ class umowy extends Module {
                 );
                 Base_ActionBarCommon::add(
                     'send',
-                    'Podpisana',
+                    'Wyślij do akceptacji',
+                    $this->create_callback_href(array($this,'manageRecord'), array("send",$umowa->id)),
+                    null,
+                    2
+                );
+            }
+            if((Base_AclCommon::i_am_sa() == "1" || Base_AclCommon::i_am_admin() == "1") && $umowa->status == "3" ){
+                Base_ActionBarCommon::add(
+                    'send',
+                    'Zaakceptuj',
                     $this->create_callback_href(array($this,'manageRecord'),array("accept",$umowa->id)),
                     null,
                     3
                 );
+                Base_ActionBarCommon::add(
+                    'reply',
+                    'Zwróć',
+                    $this->create_callback_href(array($this,'manageRecord'),array("reply",$umowa->id)),
+                    null,
+                    4
+                );
+          
                 Base_ActionBarCommon::add(
                     'delete',
                     'Odrzuć',
                     $this->create_callback_href(array($this,'manageRecord'),array("delete",$umowa->id)),
                     null,
                     5
-                );
+                ); 
             }
 
             if($umowa->status == 4){
                 $rboComment = new RBO_RecordsetAccessor("umowy_comments");
                 $comments = $rboComment->get_records(array("_active" => 1 , "id_umowy" => $umowa->id),array(), array());
                 foreach($comments as $comment){
-
-
-
                     print("<div position:fixed;z-index:9999;width:100%;height:100%;display:block; background-color: rgba(0,0,0,0.4);left:0;top:0;'>");
                         print("<div style='background-color: #fefefe;width: 40%;position: relative;border-radius:12px 12px;padding:10px;'>");
                             print("<h1 style='color:red;'> UWAGI </h1>");
@@ -314,10 +328,15 @@ class umowy extends Module {
                     $del = "<a " . $this->create_confirm_callback_href("Na pewno usunąć tą umowę?", array($this, "recordDelete"), array($subUmowa['id'], "umowy_extend")) . ">" . $del_btn . "</a>";
                     $edit = $this->createLink($edit_btn, $this->create_callback_href(array($this, "recordEdit"), array($subUmowa->id)));
                 }
+                if($umowa->status == 1){
+                    $download =  $this->createLink($word_btn,$this->downloadWord($subUmowa->id));
+                }else{
+                    $download = "";
+                }
                 print("<tr ><th style='width:8%;'>".
                 $edit." ".
                 $newByExist." ".
-                $this->createLink($word_btn,$this->downloadWord($subUmowa->id))." ".
+                $download." ".
                 $del.
                     " </th><th style='font-size:16px;background-color:#5090C1;color:white;text-align:left;cursor: pointer;' ><span class='expand' ".$arrowDown."> ".$tableName  ." </span> </th> </tr>");
                 print($tr1);
@@ -346,6 +365,9 @@ class umowy extends Module {
                 }
                 $umowa->status = '3';
                 $umowa->save();
+                $email = Utils_CommonDataCommon::get_value("Umowy/notify_email");
+                $msg  = "Umowa ".$umowa["number"]." oczekuje na weryfikację";
+                Base_MailCommon::send($email,'[UMOWY] Nowa umowa została wysłana -'.$umowa["number"],$msg);
                 break;
             case "accept":
                 $umowa = $rboUmowy->get_record($id);
@@ -353,7 +375,7 @@ class umowy extends Module {
                 $umowa->save();
                 $rboTucze = new RBO_RecordsetAccessor("kontrakty");
                 $companyRbo = new RBO_RecordsetAccessor("company");
-                for($i =0;$i<$umowa['rzuty'];$i++){
+               /* for($i =0;$i<$umowa['rzuty'];$i++){
                     $sub = Utils_RecordBrowserCommon::get_records("umowy_extend", array("id_umowy" => $umowa->id, "childType" => $umowa->type),array(),array());
                     $farmerName ="";
                     $date = "";
@@ -371,7 +393,13 @@ class umowy extends Module {
                     $newTucz = $rboTucze->new_record($tucz);
                     $newTucz->save();
     
-                }
+                }*/
+                break;
+            case "reply":
+                $umowa = $rboUmowy->get_record($id);
+                $umowa->status = '4';
+                $umowa->save();
+                $this->set_module_variable("view","reply");
                 break;
             case "delete":
                 $umowa = $rboUmowy->get_record($id);
@@ -708,7 +736,7 @@ class umowy extends Module {
             $theme->assign("documentType", $this->getTableDisplayName($existedUmowa['childType']));
             $documentName = $existedUmowa['childType'];
             $documentDOCX = new Template();
-            $documentDOCX->open(__DIR__ . "/templates/" . $documentName . "_data.docx");
+            $documentDOCX->open(__DIR__."/templates/" . $documentName . "_data.docx");
             $fieldsInDocument = $documentDOCX->getVariables();
             $fieldsAndType = array();
             foreach ($fieldsInDocument as $field) {
@@ -887,12 +915,17 @@ class umowy extends Module {
        }
     }
 
+    //  sudo apt-get install libreoffice
+    //  pip3 install unoconv
+
+
+
     public function downloadWord($id){
-       $href = 'href="modules/umowy/word.php?'.http_build_query(array('umowaID'=> $id , 'cid'=>CID)).'"';
+       $href = 'href="modules/umowy/word.php?'.http_build_query(array('umowaID'=> $id , 'cid'=>CID)).'" target="_blank"';
        return $href;
     }
     public function downloadBlankWord($id,$document){
-        $href = 'href="modules/umowy/word.php?'.http_build_query(array('umowaID'=> $id , 'cid'=>CID,'document' => $document)).'"';
+        $href = 'href="modules/umowy/word.php?'.http_build_query(array('umowaID'=> $id , 'cid'=>CID,'document' => $document)).'" target="_blank"';
         return $href;
      }
 

@@ -11,6 +11,7 @@ define('CID', $cid);
 define('READ_ONLY_SESSION',true);
 
 require_once('../../include.php');
+
 require_once 'Template.php';
 ModuleManager::load_modules();
 
@@ -27,8 +28,10 @@ if($umowaID != 0){
         $value = $company['agreement_piglet'];
         $record['warchlakinumber'] = str_replace("BEZTERMINOWA KREDYTOWA", "", $value);
     }
-
+    $record['placesigning'] = '';
     if($record['farmer']){
+        $company = Utils_RecordBrowserCommon::get_record("company", $record['farmer']);
+        $record['placesigning'] = $company['city'];
         $record['farmer'] = umowyCommon::getFarmerName($record['farmer']);
         $record['farmer'] = preg_replace('/TN/', '', $record['farmer']);
         $record['farmer'] = preg_replace('/[0-9]/', '', $record['farmer']);
@@ -39,9 +42,19 @@ if($umowaID != 0){
     if($record['pelnomocnik2']){
         $record['pelnomocnik2'] = umowyCommon::getTraderName($record['pelnomocnik2']);
     }
+    if($record['datefrom']){
+        $days = Utils_CommonDataCommon::get_value("Umowy/zakonczenie_umowy");
+        $record['dateendrange'] = date("d-m-Y",strtotime($record['datefrom']." +$days days"));
+    }else{ 
+        $record['dateendrange'] = '';
+    }
     $record['pelnomocnik1'] = $record['farmer'];
 
     $record['number'] = $umowa['number'];
+    $mainComapny = CRM_ContactsCommon::get_main_company();
+    $mainComapny = CRM_ContactsCommon::get_company($mainComapny);
+    $record['mainpesel'] = $mainComapny['pesel'];
+
 }
 else{
     $documentDOCX = new Template();
@@ -76,11 +89,24 @@ foreach($record as $key => $item){
     }
     $word->setValue($key,$item);
 }
-$name = $documentName.".docx";
+$name = $documentName;
+/*\PhpOffice\PhpWord\Settings::setPdfRendererPath('E:\xampp\htdocs\epesi\modules\Libs\TCPDF\tcpdf5.9');
+\PhpOffice\PhpWord\Settings::setPdfRendererName(\PhpOffice\PhpWord\Settings::PDF_RENDERER_TCPDF);
+$word->saveAs('document'.'.docx');*/
+/*
 header("Content-Description: File Transfer");
 header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-header('Content-Disposition: attachment; filename="'.$name.'"');
+header('Content-Disposition: attachment; filename="'.$name.'.docx"');
 header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-header('Expires: 0');
-$word->saveAs("php://output");
+header('Expires: 0');*/
+
+$word->saveAs("data/document.docx");
+exec("unoconv -f pdf /var/www/epesi/data/document.docx");
+header("Content-type: application/pdf"); 
+header("Content-Disposition: inline; filename=document.pdf"); 
+@readfile('data/document.pdf');
+unlink('data/document.docx');
+unlink('data/document.pdf');
+
+
 exit();
