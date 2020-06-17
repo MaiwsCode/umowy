@@ -14,6 +14,26 @@ class umowyCommon extends ModuleCommon {
 			)));
     }
 
+    public static function changesRecord($agreement, $mode)
+    {
+        if ($mode == 'edited') {
+            if ($agreement['status'] == '3' && $agreement['type'] == 'generalna_umowa') {
+                Utils_RecordBrowserCommon::update_record("umowy", $agreement['id'], array('status' => '1') );
+            }
+
+            if ($agreement['status'] == '6') {
+                $detailsRecords = Utils_RecordBrowserCommon::get_records(
+                    "umowy_extend",
+                    array('id_umowy' => $agreement['id']), array(), array());
+                $details = null;
+                foreach ($detailsRecords as $d) {$details = $d; }
+                Utils_RecordBrowserCommon::update_record("company", $details['farmer'], array('agreement_new' => $agreement['id']) );
+                $id = $agreement['id'];
+                unlink("/var/www/epesi/data/umowa_$id.pdf");
+            }
+        }
+    }
+
     public static function autoselect_company($str, $crits, $format_callback) {
         $str = explode(' ', trim($str));
         foreach ($str as $k=>$v)
@@ -87,6 +107,61 @@ class umowyCommon extends ModuleCommon {
     public static function automulti_format($records){
 
         return $records;
+    }
+
+    public static function generatePDF($subUmowa,$name){
+        require_once 'Template.php';
+        $umowaID = $subUmowa;
+        $record = Utils_RecordBrowserCommon::get_record("umowy_extend",$umowaID);
+        $umowa = Utils_RecordBrowserCommon::get_record("umowy",$record['id_umowy']);
+        $documentName = $record['childtype'];
+
+        if($documentName == "umowa_warchlak_gruzja"){
+            $company = Utils_RecordBrowserCommon::get_record("company", $record['farmer']);
+            $value = $company['agreement_piglet'];
+            $record['warchlakinumber'] = str_replace("BEZTERMINOWA KREDYTOWA", "", $value);
+        }
+        $record['placesigning'] = '';
+        if($record['farmer']){
+            $company = Utils_RecordBrowserCommon::get_record("company", $record['farmer']);
+            $record['placesigning'] = $company['city'];
+            $record['farmer'] = umowyCommon::getFarmerName($record['farmer']);
+            $record['farmer'] = preg_replace('/TN/', '', $record['farmer']);
+            $record['farmer'] = preg_replace('/[0-9]/', '', $record['farmer']);
+        }
+        if($record['trader']){
+            $record['trader'] = umowyCommon::getTraderName($record['trader']);
+        }
+        if($record['pelnomocnik2']){
+            $record['pelnomocnik2'] = umowyCommon::getTraderName($record['pelnomocnik2']);
+        }
+        if($record['datefrom']){
+            $days = Utils_CommonDataCommon::get_value("Umowy/zakonczenie_umowy");
+            $record['dateendrange'] = date("d-m-Y",strtotime($record['datefrom']." +$days days"));
+        }else{ 
+            $record['dateendrange'] = '';
+        }
+        $record['pelnomocnik1'] = $record['farmer'];
+
+        $record['number'] = $umowa['number'];
+        $mainComapny = CRM_ContactsCommon::get_main_company();
+        $mainComapny = CRM_ContactsCommon::get_company($mainComapny);
+        $record['mainpesel'] = $mainComapny['pesel'];
+
+        $word = new \PhpOffice\PhpWord\TemplateProcessor(__DIR__."/templates/".$documentName.".docx");
+
+        foreach ($record as $key => $item) {
+            if (strlen($item) == 0) {
+                $item = "............................";
+            } else if (preg_match("/date+[a-zA-Z]+/", $key)) {
+                $item = Base_RegionalSettingsCommon::time2reg($item, false, true, true, true);
+            }
+            $word->setValue($key, $item);
+        }
+
+        $word->saveAs("data/$name.docx");
+        exec("unoconv -f pdf /var/www/epesi/data/$name.docx");
+        unlink("data/$name.docx");
     }
 
 

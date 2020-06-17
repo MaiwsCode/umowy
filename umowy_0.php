@@ -263,7 +263,33 @@ class umowy extends Module {
                     $this->create_callback_href(array($this,'manageRecord'),array("delete",$umowa->id)),
                     null,
                     5
-                ); 
+                );
+            } else if ($umowa->status == 1 && $umowa->type == "generalna_umowa") {
+                $detailsRecords = Utils_RecordBrowserCommon::get_records("umowy_extend", array('id_umowy' => $umowa['id']), array(), array());
+                $details = null;
+                foreach($detailsRecords as $d){$details = $d;}
+                $farmer = Utils_RecordBrowserCommon::get_record("company", $details['farmer']);
+                $email = $farmer['email'];
+                $emailBody = __("email_umowa_ramowa");
+                $id = $umowa['id'];
+                umowyCommon::generatePDF($details['id'],"umowa_$id");
+                Custom_Agrohandel_ConfirmCommon::addConfirmButton(
+                    $umowa['id'],
+                    'umowy',
+                    'status',
+                    ['1', '5', '6'],
+                    'Umowa ramowa ' . $umowa['number'],
+                    $emailBody,
+                    [
+                        'company_email' => $email,
+                        'number' => $umowa['number'],
+                        'date' => $details['datesigning'],
+                        'farmer' => $farmer['company_name'],
+                    ],
+                    [
+                        "/var/www/epesi/data/umowa_$id.pdf" => 'umowa.pdf',
+                    ]
+                );
             }
 
             if($umowa->status == 4){
@@ -328,7 +354,7 @@ class umowy extends Module {
                     $del = "<a " . $this->create_confirm_callback_href("Na pewno usunąć tą umowę?", array($this, "recordDelete"), array($subUmowa['id'], "umowy_extend")) . ">" . $del_btn . "</a>";
                     $edit = $this->createLink($edit_btn, $this->create_callback_href(array($this, "recordEdit"), array($subUmowa->id)));
                 }
-                if($umowa->status == 1){
+                if($umowa->status == 1 || $umowa->status == 5 || $umowa->status == 6 ){
                     $download =  $this->createLink($word_btn,$this->downloadWord($subUmowa->id));
                 }else{
                     $download = "";
@@ -365,9 +391,11 @@ class umowy extends Module {
                 }
                 $umowa->status = '3';
                 $umowa->save();
-                $email = Utils_CommonDataCommon::get_value("Umowy/notify_email");
-                $msg  = "Umowa ".$umowa["number"]." oczekuje na weryfikację";
-                Base_MailCommon::send($email,'[UMOWY] Nowa umowa została wysłana -'.$umowa["number"],$msg);
+                if($umowa->type != "generalna_umowa"){
+                    $email = Utils_CommonDataCommon::get_value("Umowy/notify_email");
+                    $msg  = "Umowa ".$umowa["number"]." oczekuje na weryfikację";
+                    Base_MailCommon::send($email,'[UMOWY] Nowa umowa została wysłana - '.$umowa["number"], $msg);
+                }
                 break;
             case "accept":
                 $umowa = $rboUmowy->get_record($id);
@@ -874,6 +902,7 @@ class umowy extends Module {
                 }
             }
         }
+        $form->addElement("text","rzuty", "Ilość rzutów", array('value'=> $main['rzuty'] ));
         $form->addElement("hidden","documentType",$documentName);
         $form->addElement("submit","submit","Edytuj");
         $form->toHtml();
@@ -920,8 +949,12 @@ class umowy extends Module {
 
 
 
-    public function downloadWord($id){
-       $href = 'href="modules/umowy/word.php?'.http_build_query(array('umowaID'=> $id , 'cid'=>CID)).'" target="_blank"';
+    public function downloadWord($id,$toFarmer = False){
+        if($toFarmer){
+            $href = 'href="modules/umowy/word.php?'.http_build_query(array('umowaID'=> $id, 'toFarmer' => True, 'cid'=>CID)).'" target="_blank"';
+        }else{
+            $href = 'href="modules/umowy/word.php?'.http_build_query(array('umowaID'=> $id, 'cid'=>CID)).'" target="_blank"';
+        }
        return $href;
     }
     public function downloadBlankWord($id,$document){

@@ -15,9 +15,9 @@ require_once('../../include.php');
 require_once 'Template.php';
 ModuleManager::load_modules();
 
-
-
 $umowaID = $_REQUEST['umowaID'];
+$reqToFarmer = $_REQUEST['toFarmer'];
+
 if($umowaID != 0){
     $record = Utils_RecordBrowserCommon::get_record("umowy_extend",$umowaID);
     $umowa = Utils_RecordBrowserCommon::get_record("umowy",$record['id_umowy']);
@@ -78,8 +78,6 @@ else{
 
 $word = new \PhpOffice\PhpWord\TemplateProcessor(__DIR__."/templates/".$documentName.".docx");
 
-
-
 foreach($record as $key => $item){
     if(strlen($item) == 0){
         $item = "............................";
@@ -90,16 +88,6 @@ foreach($record as $key => $item){
     $word->setValue($key,$item);
 }
 $name = $documentName;
-/*\PhpOffice\PhpWord\Settings::setPdfRendererPath('E:\xampp\htdocs\epesi\modules\Libs\TCPDF\tcpdf5.9');
-\PhpOffice\PhpWord\Settings::setPdfRendererName(\PhpOffice\PhpWord\Settings::PDF_RENDERER_TCPDF);
-$word->saveAs('document'.'.docx');*/
-/*
-header("Content-Description: File Transfer");
-header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-header('Content-Disposition: attachment; filename="'.$name.'.docx"');
-header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-header('Expires: 0');*/
-
 $word->saveAs("data/document.docx");
 exec("unoconv -f pdf /var/www/epesi/data/document.docx");
 header("Content-type: application/pdf"); 
@@ -107,6 +95,8 @@ header("Content-Disposition: inline; filename=document.pdf");
 @readfile('data/document.pdf');
 unlink('data/document.docx');
 unlink('data/document.pdf');
+
+
 
 
 exit();

@@ -40,11 +40,5 @@ $translations['farmeridcard'] = "Numer dowodu";
 $translations['potracenie'] = "Potrącenie";
 $translations['cenawbc'] = "Cena WBC";
 $translations['rzuty'] = "Ilość rzutów";
-
-
-
-
-
-
-?>
-
+$translations['email_umowa_ramowa'] = "";
+$translations['agreement_new']=  'Nowa umowa ramowa';

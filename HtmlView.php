@@ -25,9 +25,9 @@ class HtmlView
      */
     public function selectListHref($elements, $default, $with_button_submit, $btn_value, $select_id, $href){
         if($with_button_submit){
-            $select = "<select id='".$select_id."' onchange='update_btn_value(this)' style='width: 10%;border-radius: 13px 13px; padding-left: 10px;' >";
+            $select = "<select id='".$select_id."' onchange='update_btn_value(this)' style='width: 30%;border-radius: 13px 13px; padding-left: 10px;' >";
         }else {
-            $select = "<select style='width: 10%;border-radius: 13px 13px; padding-left: 10px;' >";
+            $select = "<select style='width: 30%;border-radius: 13px 13px; padding-left: 10px;' >";
         }
         $elements_list = "";
         foreach ($elements as $key => $value){
